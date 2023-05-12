@@ -25,7 +25,9 @@ class CStringArray:
         string = string.replace('\r', '')
         self._strings.append('std::string(buffer + %i, %i)' % (len(self._buffer), len(string)))
         # Patch for non ASCII characters like in comment in rusha.js which contains '≥'
-        self._buffer.extend(map(lambda c: str(ord(c) if 128 > ord(c) else ord(' ')), string))
+        self._buffer.extend(
+            map(lambda c: str(ord(c) if ord(c) < 128 else ord(' ')), string)
+        )
 
     def write(self, outHandle, arrayName):
         print('#include <string>', file=outHandle)
@@ -59,7 +61,7 @@ def convertXMLFile(array, file):
         data.append(result)
         fileName = os.path.basename(file)
     array.add(fileName)
-    array.add('require.scopes["%s"] = %s;' % (fileName, json.dumps(data)))
+    array.add(f'require.scopes["{fileName}"] = {json.dumps(data)};')
     fileHandle.close()
 
 
@@ -69,7 +71,7 @@ def convertJsFile(array, file):
     referenceFileName = os.path.basename(file)
     array.add(referenceFileName)
     if referenceFileName.endswith('.json'):
-        array.add('require.scopes["../data/%s"] = %s;' % (referenceFileName, jsFileContent))
+        array.add(f'require.scopes["../data/{referenceFileName}"] = {jsFileContent};')
     else:
         array.add(jsTemplate % (re.sub("\\.jsm?$", "", referenceFileName), jsFileContent))
 
@@ -86,9 +88,8 @@ def convert(verbatimBefore, convertFiles, verbatimAfter, outFile):
 
     addFilesVerbatim(array, verbatimAfter)
 
-    outHandle = open(outFile, 'w')
-    array.write(outHandle, 'jsSources')
-    outHandle.close()
+    with open(outFile, 'w') as outHandle:
+        array.write(outHandle, 'jsSources')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert JavaScript files')

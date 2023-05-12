@@ -116,17 +116,14 @@ def overridden_WriteAndroidNdkModuleRule(self, module_name, all_sources, link_de
     orig_MakefileWriter_WriteAndroidNdkModuleRule(self, module_name, all_sources, link_deps)
     self.WriteList = orig_WriteList
 
-MakefileWriter.Write = overridden_Write
 MakefileWriter.WriteAndroidNdkModuleRule = overridden_WriteAndroidNdkModuleRule
 
+MakefileWriter.Write = overridden_Write
 # Issue 5393,6236
 # replace $(LD_INPUTS) by "-Wl,--start-group $(LD_INPUTS) -Wl,--end-group" but
 # only for cmd_link_host and only on linux.
 if platform.system() == "Linux":
-    gyp.generator.make.LINK_COMMANDS_ANDROID = \
-        gyp.generator.make.LINK_COMMANDS_ANDROID[:663] + \
-        "-Wl,--start-group $(LD_INPUTS) -Wl,--end-group" + \
-        gyp.generator.make.LINK_COMMANDS_ANDROID[675:]
+    gyp.generator.make.LINK_COMMANDS_ANDROID = f"{gyp.generator.make.LINK_COMMANDS_ANDROID[:663]}-Wl,--start-group $(LD_INPUTS) -Wl,--end-group{gyp.generator.make.LINK_COMMANDS_ANDROID[675:]}"
 
 if __name__ == '__main__':
     gyp.main(sys.argv[1:])

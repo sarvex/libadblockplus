@@ -22,9 +22,7 @@ dont_expand = [
 ]
 
 def _FixPath(path):
-    if path in dont_expand:
-        return path
-    return orig_fix_path(path)
+    return path if path in dont_expand else orig_fix_path(path)
 gyp.generator.msvs._FixPath = _FixPath
 
 if __name__ == '__main__':
